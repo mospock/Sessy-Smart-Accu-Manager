@@ -7,53 +7,58 @@ blueprint:
   # Zorg ervoor dat de source_url de directe link naar dit bestand op uw GitHub Gist/Repo bevat!
   source_url: https://github.com/mospock/Sessy-Smart-Accu-Manager/blob/main/blueprints/automation/smart_battery_manager.yaml
 
-  input:
+ input:
     # ----------------------------------------------------------------------
-    # 1. CORE SENSOREN (VERPLICHT) - CORRECTIE HIERONDER
+    # 1. CORE SENSOREN (VERPLICHT) - DEFINITIEVE CORRECTIE HIERONDER
     # ----------------------------------------------------------------------
     p1_sensor_vermogen_a:
       name: Huidig Verbruik (Ampère)
       description: Sensor die het totale actuele stroomverbruik van het huis in Ampère (A) meet.
       selector:
         entity:
-          domain: sensor
-          # CORRECT: UoM als filter binnen de 'entity' selector
-          unit_of_measurement: A
+          # De filters (domain & UoM) staan nu correct onder 'filter'
+          filter:
+            - domain: sensor
+              unit_of_measurement: A
           
     lading_accu_1:
       name: Laadstatus Accu 1 (SoC %)
       description: Sensor voor de laadstatus van accu 1 in percentage (0-100).
       selector:
         entity:
-          domain: sensor
-          unit_of_measurement: "%"
+          filter:
+            - domain: sensor
+              unit_of_measurement: "%"
 
     lading_accu_2:
       name: Laadstatus Accu 2 (SoC %)
       description: Sensor voor de laadstatus van accu 2 in percentage (0-100).
       selector:
         entity:
-          domain: sensor
-          unit_of_measurement: "%"
+          filter:
+            - domain: sensor
+              unit_of_measurement: "%"
 
     prijs_tarief_sensor:
       name: Dynamische Stroomprijs Sensor
       description: Zonneplan/Tibber sensor (met 'forecast' attribuut) voor de dynamische prijs (EUR/kWh).
       selector:
         entity:
-          domain: sensor
-          unit_of_measurement: EUR/kWh
+          filter:
+            - domain: sensor
+              unit_of_measurement: EUR/kWh
 
     netto_verbruik_w:
       name: Netto Verbruik Huis (Watt)
       description: Sensor die het actuele Netto Stroomverbruik (W) meet. Positief=Import, Negatief=Export/Nul op de meter.
       selector:
         entity:
-          domain: sensor
-          unit_of_measurement: W
+          filter:
+            - domain: sensor
+              unit_of_measurement: W
           
     # ----------------------------------------------------------------------
-    # 2. OUTPUT HELPERS (MOETEN INPUT_NUMBER ZIJN)
+    # 2. OUTPUT HELPERS (MOETEN INPUT_NUMBER ZIJN) - Geen filter nodig voor input_number
     # ----------------------------------------------------------------------
     input_vermogen_accu_1:
       name: Accu 1 Laad/Ontlaad Helper
