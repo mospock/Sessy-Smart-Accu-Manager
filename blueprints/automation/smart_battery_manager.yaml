@@ -25,7 +25,7 @@ blueprint:
       selector:
         entity:
           domain: sensor
-#          unit_of_measurement: "%"
+          unit_of_measurement: "%"
 
     lading_accu_2:
       name: Laadstatus Accu 2 (SoC %)
