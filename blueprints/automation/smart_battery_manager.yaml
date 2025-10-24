@@ -6,7 +6,7 @@ blueprint:
     Beheert het laden van accu's tijdens de goedkoopste uren en het ontladen
     tijdens dure uren ('Nul op de meter' methode).
   domain: automation
-  source_url: [Voeg hier optioneel de link naar een GitHub Gist toe]
+  source_url: https://github.com/mospock/Sessy-Smart-Accu-Manager/blob/main/blueprints/automation/smart_battery_manager.yaml
 
   input:
     # ----------------------------------------------------------------------
