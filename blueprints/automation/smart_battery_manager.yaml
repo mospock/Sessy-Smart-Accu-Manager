@@ -19,7 +19,7 @@ blueprint:
           # De filters (domain & UoM) staan nu correct onder 'filter'
           filter:
             - domain: sensor
-              unit_of_measurement: "%"
+              # unit_of_measurement: "%"
           
     lading_accu_1:
       name: Laadstatus Accu 1 (SoC %)
