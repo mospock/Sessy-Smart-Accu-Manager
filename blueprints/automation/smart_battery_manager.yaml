@@ -7,7 +7,7 @@ blueprint:
   # Zorg ervoor dat de source_url de directe link naar dit bestand op uw GitHub Gist/Repo bevat!
   source_url: https://github.com/mospock/Sessy-Smart-Accu-Manager/blob/main/blueprints/automation/smart_battery_manager.yaml
 
- input:
+  input:
     # ----------------------------------------------------------------------
     # 1. CORE SENSOREN (VERPLICHT) - DEFINITIEVE CORRECTIE HIERONDER
     # ----------------------------------------------------------------------
