@@ -9,7 +9,7 @@ blueprint:
 
   input:
     # ----------------------------------------------------------------------
-    # 1. CORE SENSOREN (VERPLICHT)
+    # 1. CORE SENSOREN (VERPLICHT) - CORRECTIE HIERONDER
     # ----------------------------------------------------------------------
     p1_sensor_vermogen_a:
       name: Huidig Verbruik (Ampère)
@@ -17,6 +17,7 @@ blueprint:
       selector:
         entity:
           domain: sensor
+          # CORRECT: UoM als filter binnen de 'entity' selector
           unit_of_measurement: A
           
     lading_accu_1:
@@ -69,7 +70,7 @@ blueprint:
           domain: input_number
           
     # ----------------------------------------------------------------------
-    # 3. CONFIGUREERBARE WAARDEN
+    # 3. CONFIGUREERBARE WAARDEN (GEEN WIJZIGING NODIG)
     # ----------------------------------------------------------------------
     max_stroom_net_a:
       name: Max. Hoofdaansluiting (A)
