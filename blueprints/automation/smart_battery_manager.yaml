@@ -19,7 +19,6 @@ blueprint:
         entity:
           filter:
             - domain: sensor
-              unit_of_measurement: A
           
     lading_accu_1:
       name: Laadstatus Accu 1 (SoC %)
@@ -44,7 +43,6 @@ blueprint:
         entity:
           filter:
             - domain: sensor
-              unit_of_measurement: EUR/kWh
 
     netto_verbruik_w:
       name: Netto Verbruik Huis (Watt)
@@ -53,6 +51,7 @@ blueprint:
         entity:
           filter:
             - domain: sensor
+
           
     # ----------------------------------------------------------------------
     # 2. OUTPUT HELPERS (MOETEN INPUT_NUMBER ZIJN) - Geen filter nodig voor input_number
