@@ -1,55 +1,59 @@
+
 blueprint:
   name: Slimme Accu Laad- en Ontlaad Manager (Prijs & Load Balancing)
   description: |
     Beheert het laden van accu's tijdens de goedkoopste uren en het ontladen
     tijdens dure uren ('Nul op de meter' methode).
-    LET OP: Selecteer handmatig sensoren met de juiste eenheid (A, %, W, EUR/kWh),
-    aangezien strikte validatie automatische filtering voorkomt.
-  domain: automation
   # Zorg ervoor dat de source_url de directe link naar dit bestand op uw GitHub Gist/Repo bevat!
-  source_url: [https://github.com/mospock/Sessy-Smart-Accu-Manager/blob/main/blueprints/automation/smart_battery_manager.yaml
-
+  author: Richard Molenaar
+  source_url: https://github.com/mospock/Sessy-Smart-Accu-Manager/blob/main/blueprints/automation/smart_battery_manager.yaml
+  domain: automation
   input:
     # ----------------------------------------------------------------------
-    # 1. CORE SENSOREN (ZONDER UoM FILTERS)
+    # 1. CORE SENSOREN (VERPLICHT) - DEFINITIEVE CORRECTIE HIERONDER
     # ----------------------------------------------------------------------
     p1_sensor_vermogen_a:
       name: Huidig Verbruik (Ampère)
-      description: Selecteer de sensor (eenheid A) die het totale actuele stroomverbruik in Ampère meet.
+      description: Sensor die het totale actuele stroomverbruik van het huis in Ampère (A) meet.
       selector:
         entity:
-          domain: sensor
-          
+          filter:
+            - domain: sensor
+
     lading_accu_1:
       name: Laadstatus Accu 1 (SoC %)
-      description: Selecteer de sensor (eenheid %) voor de laadstatus van accu 1.
+      description: Sensor voor de laadstatus van accu 1 in percentage (0-100).
       selector:
         entity:
-          domain: sensor
+          filter:
+            - domain: sensor
 
     lading_accu_2:
       name: Laadstatus Accu 2 (SoC %)
-      description: Selecteer de sensor (eenheid %) voor de laadstatus van accu 2.
+      description: Sensor voor de laadstatus van accu 2 in percentage (0-100).
       selector:
         entity:
-          domain: sensor
+          filter:
+            - domain: sensor
 
     prijs_tarief_sensor:
       name: Dynamische Stroomprijs Sensor
-      description: Selecteer de Zonneplan/Tibber sensor (eenheid EUR/kWh) voor de dynamische prijs (moet 'forecast' attribuut hebben).
+      description: Zonneplan/Tibber sensor (met 'forecast' attribuut) voor de dynamische prijs (EUR/kWh).
       selector:
         entity:
-          domain: sensor
+          filter:
+            - domain: sensor
 
     netto_verbruik_w:
       name: Netto Verbruik Huis (Watt)
-      description: Selecteer de sensor (eenheid W) die het actuele Netto Stroomverbruik meet.
+      description: Sensor die het actuele Netto Stroomverbruik (W) meet. Positief=Import, Negatief=Export/Nul op de meter.
       selector:
         entity:
-          domain: sensor
+          filter:
+            - domain: sensor
           
     # ----------------------------------------------------------------------
-    # 2. OUTPUT HELPERS
+    # 2. OUTPUT HELPERS (MOETEN INPUT_NUMBER ZIJN) - Geen filter nodig voor input_number
     # ----------------------------------------------------------------------
     input_vermogen_accu_1:
       name: Accu 1 Laad/Ontlaad Helper
@@ -66,7 +70,7 @@ blueprint:
           domain: input_number
           
     # ----------------------------------------------------------------------
-    # 3. CONFIGUREERBARE WAARDEN
+    # 3. CONFIGUREERBARE WAARDEN (GEEN WIJZIGING NODIG)
     # ----------------------------------------------------------------------
     max_stroom_net_a:
       name: Max. Hoofdaansluiting (A)
@@ -118,7 +122,7 @@ blueprint:
           min: 0
           max: 1.0
           step: 0.001
-          unit_of_measurement: '€/kWh'
+          unit_of_measurement: €/kWh
           mode: box
 
     min_soc_ontladen:
@@ -129,7 +133,7 @@ blueprint:
         number:
           min: 5
           max: 95
-          unit_of_measurement: '%'
+          unit_of_measurement: "%"
           mode: box
 
     doel_soc_percentage:
@@ -140,7 +144,7 @@ blueprint:
         number:
           min: 80
           max: 100
-          unit_of_measurement: '%'
+          unit_of_measurement: "%"
           mode: box
           
 mode: single
@@ -151,7 +155,66 @@ trigger:
     seconds: "/10"
     
 action:
-  # ALLE CONSTANTEN/STATEN WORDEN HIER LOKAAL IN DE CHOOSE BLOKKEN GEBRUIKT
+  # ----------------------------------------------------------------------------
+  # 1. BEREKENING VAN DE HUIDIGE STATUS & BENODIGDE UREN
+  # ----------------------------------------------------------------------------
+  - variables:
+      # Configuratieparameters uit de Blueprint inputs
+      MAX_STROOM_NET_A: !input max_stroom_net_a
+      MAX_STROOM_PER_ACCU_A: !input max_stroom_per_accu_a
+      MAX_ONTLAAD_W: !input max_ontlaad_w
+      ONTLAAD_PRIJS_GRENS: !input ontlaad_prijs_grens_eur
+      MIN_SOC_ONT: !input min_soc_ontladen
+      DOEL_SOC: !input doel_soc_percentage
+      TOTALE_CAP_WH: !input totale_capaciteit_wh
+      VEILIGHEIDSMARGE: 0.5 # Stroom buffer (A)
+      SPANNING: 230.0 # V
+
+      # Actuele waarden
+      HUIDIG_VERBRUIK_A: "{{ states(p1_sensor_vermogen_a) | float(0) }}"
+      LADING_A1: "{{ states(lading_accu_1) | float(0) }}"
+      LADING_A2: "{{ states(lading_accu_2) | float(0) }}"
+      NETTO_VERBRUIK_W: "{{ states(netto_verbruik_w) | float(0) }}"
+      HUIDIGE_PRIJS_EUR: "{{ states(prijs_tarief_sensor) | float(99) }}"
+      GEM_LADING: "{{ ((LADING_A1 + LADING_A2) / 2) | round(1) }}"
+      
+      # 1a. Bereken Benodigde Laadtijd (Uren)
+      WH_NODIG: "{{ ((DOEL_SOC - GEM_LADING) / 100 * TOTALE_CAP_WH) | max(0) }}"
+      UREN_NODIG: "{{ (WH_NODIG / MAX_ONTLAAD_W) | round(2) }}"
+      UREN_NODIG_BLOK: "{{ (UREN_NODIG * 2) | round(0, 'ceil') / 2 }}" # Afgerond naar half uur
+
+      # 1b. Bepaal de Goedkoopste Laadperiode
+      PRICES: "{{ state_attr(prijs_tarief_sensor, 'forecast') | default([]) }}"
+      PRICES_FUTURE: "{{ PRICES | selectattr('datetime', '>', now().isoformat()) | list }}"
+      
+      BEST_WINDOW_INFO: >
+        {% set benodigde_uren = UREN_NODIG_BLOK | int %}
+        {% set ns = namespace(cheapest_price=99999, start_time=none) %}
+        {% if benodigde_uren > 0 %}
+          {% for i in range(0, PRICES_FUTURE | length - benodigde_uren) %}
+            {% set window = PRICES_FUTURE[i:i + benodigde_uren] %}
+            {% set avg_price = window | map(attribute='electricity_price') | map('float', 0) | average %}
+            {% if avg_price < ns.cheapest_price %}
+              {% set ns.cheapest_price = avg_price %}
+              {% set ns.start_time = window[0].datetime %}
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+        {{ ns }}
+
+      IS_GOEDKOOPSTE_TIJD: >
+        {% set info = BEST_WINDOW_INFO %}
+        {% if info.start_time is not none %}
+          {% set start = as_datetime(info.start_time) %}
+          {% set end = start + timedelta(hours=UREN_NODIG_BLOK) %}
+          {{ now() >= start and now() < end }}
+        {% else %}
+          False
+        {% endif %}
+        
+  # ----------------------------------------------------------------------------
+  # 2. BEPALING VAN DE ACTIE (ONT-/LADEN OF STANDBY)
+  # ----------------------------------------------------------------------------
   - choose:
       # ======================================================================
       # KEUZE 1: SLIM ONTLADEN (Tijdens dure uren, Nul op de meter)
@@ -159,22 +222,16 @@ action:
     - conditions:
         # 1a. Prijs is hoger dan de drempel
         - condition: template
-          value_template: "{{ states('!input prijs_tarief_sensor') | float(99) > !input ontlaad_prijs_grens_eur }}"
+          value_template: "{{ HUIDIGE_PRIJS_EUR > ONTLAAD_PRIJS_GRENS }}"
         # 1b. Huis verbruikt stroom van het net
         - condition: template
-          value_template: "{{ states('!input netto_verbruik_w') | float(0) > 50 }}"
+          value_template: "{{ NETTO_VERBRUIK_W > 50 }}" # 50W marge voor stabiliteit
         # 1c. Accu's zijn niet onder de minimale ontlaadgrens
         - condition: template
-          value_template: >
-            {% set LADING_A1 = states('!input lading_accu_1') | float(0) %}
-            {% set LADING_A2 = states('!input lading_accu_2') | float(0) %}
-            {{ ((LADING_A1 + LADING_A2) / 2) | round(1) > !input min_soc_ontladen }}
+          value_template: "{{ GEM_LADING > MIN_SOC_ONT }}"
 
       sequence:
         - variables:
-            NETTO_VERBRUIK_W: "{{ states('!input netto_verbruik_w') | float(0) }}"
-            MAX_ONTLAAD_W: !input max_ontlaad_w
-            
             # Ontladen om NETTO_VERBRUIK_W te compenseren, gelimiteerd tot MAX_ONTLAAD_W
             GEWENST_ONTLAAD_W: "{{ [NETTO_VERBRUIK_W, MAX_ONTLAAD_W] | min }}"
             # Negatieve waarde instellen op de input_number = ontladen
@@ -197,65 +254,15 @@ action:
       # KEUZE 2: SLIM LADEN (Tijdens goedkoopste uren, Load Balancing actief)
       # ======================================================================
     - conditions:
-        # 2a. Is de berekende goedkope laadtijd nu actief? (Complexe berekening geëmbéd)
+        # 2a. Is de berekende goedkope laadtijd nu actief?
         - condition: template
-          value_template: >
-            {% set DOEL_SOC = !input doel_soc_percentage %}
-            {% set LADING_A1 = states('!input lading_accu_1') | float(0) %}
-            {% set LADING_A2 = states('!input lading_accu_2') | float(0) %}
-            {% set GEM_LADING = ((LADING_A1 + LADING_A2) / 2) | round(1) %}
-            {% set TOTALE_CAP_WH = !input totale_capaciteit_wh %}
-            {% set MAX_ONTLAAD_W = !input max_ontlaad_w %}
-            {% set prijs_tarief_sensor = '!input prijs_tarief_sensor' %}
-            
-            {% set WH_NODIG = ((DOEL_SOC - GEM_LADING) / 100 * TOTALE_CAP_WH) | max(0) %}
-            {% set UREN_NODIG = (WH_NODIG / MAX_ONTLAAD_W) | round(2) %}
-            {% set UREN_NODIG_BLOK = (UREN_NODIG * 2) | round(0, 'ceil') / 2 %}
-
-            {% set PRICES = state_attr(prijs_tarief_sensor, 'forecast') | default([]) %}
-            {% set PRICES_FUTURE = PRICES | selectattr('datetime', '>', now().isoformat()) | list %}
-
-            {% set benodigde_uren = UREN_NODIG_BLOK | int %}
-            {% set ns = namespace(cheapest_price=99999, start_time=none) %}
-
-            {% if benodigde_uren > 0 %}
-              {% for i in range(0, PRICES_FUTURE | length - benodigde_uren) %}
-                {% set window = PRICES_FUTURE[i:i + benodigde_uren] %}
-                {% set avg_price = window | map(attribute='electricity_price') | map('float', 0) | average %}
-                {% if avg_price < ns.cheapest_price %}
-                  {% set ns.cheapest_price = avg_price %}
-                  {% set ns.start_time = window[0].datetime %}
-                {% endif %}
-              {% endfor %}
-            {% endif %}
-            
-            {% if ns.start_time is not none %}
-              {% set start = as_datetime(ns.start_time) %}
-              {% set end = start + timedelta(hours=UREN_NODIG_BLOK) %}
-              {{ now() >= start and now() < end }}
-            {% else %}
-              False
-            {% endif %}
-
+          value_template: "{{ IS_GOEDKOOPSTE_TIJD }}"
         # 2b. Accu's zijn niet vol
         - condition: template
-          value_template: >
-            {% set LADING_A1 = states('!input lading_accu_1') | float(0) %}
-            {% set LADING_A2 = states('!input lading_accu_2') | float(0) %}
-            {{ ((LADING_A1 + LADING_A2) / 2) | round(1) < !input doel_soc_percentage }}
+          value_template: "{{ GEM_LADING < DOEL_SOC }}"
         
       sequence:
         - variables:
-            # Opnieuw definieer variabelen die nodig zijn voor de berekening
-            MAX_STROOM_NET_A: !input max_stroom_net_a
-            MAX_STROOM_PER_ACCU_A: !input max_stroom_per_accu_a
-            LADING_A1: "{{ states('!input lading_accu_1') | float(0) }}"
-            LADING_A2: "{{ states('!input lading_accu_2') | float(0) }}"
-            HUIDIG_VERBRUIK_A: "{{ states('!input p1_sensor_vermogen_a') | float(0) }}"
-            DOEL_SOC: !input doel_soc_percentage
-            VEILIGHEIDSMARGE: 0.5
-            SPANNING: 230.0
-
             IS_A1_FULL: "{{ LADING_A1 >= DOEL_SOC }}"
             IS_A2_FULL: "{{ LADING_A2 >= DOEL_SOC }}"
             
