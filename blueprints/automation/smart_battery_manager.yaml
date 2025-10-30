@@ -53,7 +53,6 @@ blueprint:
         entity:
           filter:
             - domain: sensor
-              unit_of_measurement: W
           
     # ----------------------------------------------------------------------
     # 2. OUTPUT HELPERS (MOETEN INPUT_NUMBER ZIJN) - Geen filter nodig voor input_number
