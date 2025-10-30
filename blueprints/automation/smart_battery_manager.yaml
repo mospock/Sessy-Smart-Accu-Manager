@@ -17,7 +17,6 @@ blueprint:
       description: Sensor die het totale actuele stroomverbruik van het huis in Ampère (A) meet.
       selector:
         entity:
-          # De filters (domain & UoM) staan nu correct onder 'filter'
           filter:
             - domain: sensor
               unit_of_measurement: A
