@@ -179,9 +179,8 @@ action:
       LADING_A1: "{{ states(SOC_A1_SENSOR) | float(0) }}"
       LADING_A2: "{{ states(SOC_A2_SENSOR) | float(0) }}"
       NETTO_VERBRUIK_W: "{{ states(NETTO_VERBRUIK_SENSOR_W) | float(0) }}"
-      #HUIDIGE_PRIJS_EUR: "{{ states(PRIJS_SENSOR) | float(99) }}"
-      HUIDIGE_PRIJS_EUR: 0.10
-	  GEM_LADING: "{{ ((LADING_A1 + LADING_A2) / 2) | round(1) }}"
+      HUIDIGE_PRIJS_EUR: "{{ states(PRIJS_SENSOR) | float(99) }}"
+      GEM_LADING: "{{ ((LADING_A1 + LADING_A2) / 2) | round(1) }}"
       
       # 1a. Bereken Benodigde Laadtijd (Uren)
       WH_NODIG: "{{ ((DOEL_SOC - GEM_LADING) / 100 * TOTALE_CAP_WH) | max(0) }}"
