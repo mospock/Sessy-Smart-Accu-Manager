@@ -19,7 +19,7 @@ blueprint:
         entity:
           filter:
             - domain: sensor
-          
+
     lading_accu_1:
       name: Laadstatus Accu 1 (SoC %)
       description: Sensor voor de laadstatus van accu 1 in percentage (0-100).
@@ -51,7 +51,6 @@ blueprint:
         entity:
           filter:
             - domain: sensor
-
           
     # ----------------------------------------------------------------------
     # 2. OUTPUT HELPERS (MOETEN INPUT_NUMBER ZIJN) - Geen filter nodig voor input_number
