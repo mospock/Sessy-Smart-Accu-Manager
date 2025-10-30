@@ -181,8 +181,8 @@ action:
       NETTO_VERBRUIK_W: "{{ states(NETTO_VERBRUIK_SENSOR_W) | float(0) }}"
       # - TEST - HUIDIGE_PRIJS_EUR: "{{ states(PRIJS_SENSOR) | float(99) }}"
       HUIDIGE_PRIJS_EUR: 0.10 # cent
-	  GEM_LADING: "{{ ((LADING_A1 + LADING_A2) / 2) | round(1) }}"
-      
+      GEM_LADING: "{{ ((LADING_A1 + LADING_A2) / 2) | round(1) }}"
+
       # 1a. Bereken Benodigde Laadtijd (Uren)
       WH_NODIG: "{{ ((DOEL_SOC - GEM_LADING) / 100 * TOTALE_CAP_WH) | max(0) }}"
       UREN_NODIG: "{{ (WH_NODIG / MAX_ONTLAAD_W) | round(2) }}"
