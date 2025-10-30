@@ -175,11 +175,11 @@ action:
       NETTO_VERBRUIK_SENSOR_W: !input netto_verbruik_w
 
       # Actuele waarden (Gebruikt nu de lokale variabelen)
-      HUIDIG_VERBRUIK_A: "{{ states(P1_SENSOR_A) | float(0) }}"
-      LADING_A1: "{{ states(SOC_A1_SENSOR) | float(0) }}"
-      LADING_A2: "{{ states(SOC_A2_SENSOR) | float(0) }}"
-      NETTO_VERBRUIK_W: "{{ states(NETTO_VERBRUIK_SENSOR_W) | float(0) }}"
-      HUIDIGE_PRIJS_EUR: "{{ states(PRIJS_SENSOR) | float(99) }}"
+      HUIDIG_VERBRUIK_A: "{{ states(P1_SENSOR_A) }}"
+      LADING_A1: "{{ states(SOC_A1_SENSOR) }}"
+      LADING_A2: "{{ states(SOC_A2_SENSOR) }}"
+      NETTO_VERBRUIK_W: "{{ states(NETTO_VERBRUIK_SENSOR_W) }}"
+      HUIDIGE_PRIJS_EUR: "{{ states(PRIJS_SENSOR) }}"
       GEM_LADING: "{{ ((LADING_A1 + LADING_A2) / 2) | round(1) }}"
       
       # 1a. Bereken Benodigde Laadtijd (Uren)
