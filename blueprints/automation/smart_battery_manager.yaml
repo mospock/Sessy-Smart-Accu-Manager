@@ -188,7 +188,14 @@ action:
       UREN_NODIG_BLOK: "{{ (UREN_NODIG * 2) | round(0, 'ceil') / 2 }}" # Afgerond naar half uur
 
       # 1b. Bepaal de Goedkoopste Laadperiode
-      PRICES: "{{ state_attr(PRIJS_SENSOR, 'forecast') | default([]) }}" # Gebruikt nu lokale variabele
+      PRICES: >
+        {% set attr = state_attr(PRIJS_SENSOR, 'forecast') %}
+        {% if attr is iterable and attr is not string %}
+          {{ attr }}
+        {% else %}
+          []
+        {% endif %}
+
       PRICES_FUTURE: "{{ PRICES | selectattr('datetime', '>', now().isoformat()) | list }}"
       
       BEST_WINDOW_INFO: >
