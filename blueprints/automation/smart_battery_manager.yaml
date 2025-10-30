@@ -17,8 +17,8 @@ blueprint:
         entity:
           # De filters (domain & UoM) staan nu correct onder 'filter'
           filter:
-            domain: sensor
-            unit_of_measurement: A
+            - domain: sensor
+              unit_of_measurement: A
           
     lading_accu_1:
       name: Laadstatus Accu 1 (SoC %)
@@ -26,8 +26,8 @@ blueprint:
       selector:
         entity:
           filter:
-            domain: sensor
-            unit_of_measurement: "%"
+            - domain: sensor
+              unit_of_measurement: "%"
 
     lading_accu_2:
       name: Laadstatus Accu 2 (SoC %)
