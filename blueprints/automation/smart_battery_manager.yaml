@@ -37,7 +37,6 @@ blueprint:
         entity:
           filter:
             - domain: sensor
-              unit_of_measurement: "%"
 
     prijs_tarief_sensor:
       name: Dynamische Stroomprijs Sensor
